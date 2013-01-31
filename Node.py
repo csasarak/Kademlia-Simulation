@@ -1,5 +1,5 @@
 # Author: Christopher Sasarak
-import KConstants
+import KademliaConstants
 
 # Implementation of a node object
 class Node(object):
