@@ -1,6 +1,7 @@
 # Author: Christopher Sasarak
-import KademliaConstants
+import kademliaConstants
 import math
+import hashlib
 
 class Node(object):
     """
@@ -13,21 +14,30 @@ class Node(object):
         Constructor for a Kademlia node.
 
         ID -- The ID for this Node.
-              Must be able to be represented as a bit-string with length < KademliaConstants.bit_string_size
+              Must be able to be represented as a bit-string with length < kademliaConstants.bit_string_size
+              Generally this is an IP address.
         """
         self.id = ID
-
+        self.successor = None
+        self.predecessor = None
+        
+        # Get the hash and truncate to the correct number of bits
+        self.id_hash = int(hashlib.sha1(self.id).hexdigest(), 16)
+        self.id_hash = self.id_hash % int(math.pow(2, kademliaConstants.bit_string_size))
+        
         self.kBuckets = list()
         self.key_value = (None, None)
         
         # Populate the Node with empty buckets
-        for i in range(0, KademliaConstants.bit_string_size):
-            self.kBuckets.append(KBucket(i, self, KademliaConstants.k_bucket_size))
+        for i in range(0, kademliaConstants.bit_string_size):
+            self.kBuckets.append(KBucket(i, self, kademliaConstants.k_bucket_size))
 
     def ping(self, triple):
         """
         This method is used to test whether or not another node is active
         Return True if a response was received, False otherwise
+
+        triple -- The triple to contact
         """ 
         return True
 
@@ -35,7 +45,7 @@ class Node(object):
         """
         Query this node's routing table for a node, currently just adds the node to the table.
 
-        triple -- A 3-tuple of the (IP, UDP Port, ID) too look up in the routing table
+        triple -- A 3-tuple of the (IP, UDP Port, ID) to look up in the routing table
         
         """
         ip, port, node_id = triple
@@ -45,13 +55,31 @@ class Node(object):
                     k.add_triple(triple)
                 except WrongKBucketException:
                     pass
-                
 
+    def compare_nodes(n1, n2):
+        """
+        Compare two nodes. Return a negative, positive, or zero if
+        based on id n1 < n2, n1 > n2, or n1 == n2.
+
+        n1 -- The first node for the comparison.
+        n2 -- The second node for the comparison.
+        """
+        diff = n1.id_hash - n2.id_hash
+
+        # Need to make this an integer, so check them
+        if diff < 0:
+            return -1
+        elif diff > 0:
+            return 1
+
+        # We shouldn't get here if we're using a good enough hash function
+        return 0
+        
     def __str__(self):
         """
         Return a string representation of this Node and the contents of its k-buckets.
         """
-        string = "Node {}: ".format(bin(self.id))
+        string = "Node {}, ID hash {}: ".format(self.id, hex(self.id_hash))
         
         for i in self.kBuckets:
             string = "{} {}".format(string, str(i))
@@ -69,6 +97,7 @@ class KBucket(object):
         """
         This exception is thrown when an attempt is made to add a triple to a KBucket when that
         triple is out of that KBucket's range.
+
         """
         pass
     
@@ -79,7 +108,7 @@ class KBucket(object):
         i    -- The position of this KBucket in the Node's bucket-list
         node -- The node that this KBucket is referenced in.
         k    -- Optional, the size of the list of triples this KBucket should maintain.
-                If not included, then KademliaConstants.k_bucket_size will be used.
+                If not included, then kademliaConstants.k_bucket_size will be used.
                 
         """
         # Use default k size if none is provided
@@ -89,7 +118,7 @@ class KBucket(object):
             self.k = k
 
         self.i = i
-        self.node = node
+        self.node = parent_node
         self.triples = list()
 
 
@@ -133,7 +162,6 @@ class KBucket(object):
 
         other_id -- The id to check against this KBucket's space
         """
-        print "{}".format(self.i)
         distance = self.node.id ^ other_id
         if(distance  <= math.pow(2, self.i+1) and distance > math.pow(2, self.i)):
             return True
@@ -145,17 +173,13 @@ class KBucket(object):
         Return a string representation of this KBucket including the values of its triples.
         
         """
-        string = "kBucket {}: ".format(self.i)
+        string = "\nkBucket {}: ".format(self.i)
 
         if(len(self.triples) == 0):
-            return "{} empty".format(string)
+            return "{} empty;".format(string)
         
         for b in self.triples:
             ip, port, node_id = b
-            string = "{} ({}, {}, {})".format(string, ip, port, bin(node_id) );
+            string = "\n\t{} ({}, {}, {});".format(string, ip, port, hex(node_id) );
 
         return string
-        
-    
-if(__name__ == "__main__"):
-    pass

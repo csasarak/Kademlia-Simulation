@@ -2,5 +2,6 @@
 
 # This file contains constants for use by the Kademlia simulation
 
-bit_string_size = 4
-k_bucket_size = 20
+bit_string_size = 32
+k_bucket_size = 10
+initial_network_size = 10
