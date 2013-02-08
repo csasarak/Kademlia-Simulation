@@ -32,6 +32,21 @@ class Node(object):
         for i in range(0, kademliaConstants.bit_string_size):
             self.kBuckets.append(KBucket(i, self, kademliaConstants.k_bucket_size))
 
+    def update_kbuckets(func):
+        """
+        This decorator function will return a new function that
+        updates a k-bucket with whatever triple it was called with.
+
+        func -- The function to decorate, normally this will be decorated with
+        Python's annotation syntax.
+        """
+        def new_func(self, triple):
+            self.add_triple(triple)
+            func(triple)
+
+        return new_func
+    
+    @update_kbuckets
     def ping(self, triple):
         """
         This method is used to test whether or not another node is active
@@ -74,7 +89,7 @@ class Node(object):
 
         # We shouldn't get here if we're using a good enough hash function
         return 0
-        
+    
     def __str__(self):
         """
         Return a string representation of this Node and the contents of its k-buckets.
