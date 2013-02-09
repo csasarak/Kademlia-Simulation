@@ -5,3 +5,4 @@
 bit_string_size = 32
 k_bucket_size = 10
 initial_network_size = 10
+failure_probability = .09 

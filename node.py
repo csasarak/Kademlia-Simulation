@@ -9,15 +9,17 @@ class Node(object):
     
     """
     
-    def __init__(self, ID):
+    def __init__(self, ID, random):
         """
         Constructor for a Kademlia node.
 
         ID -- The ID for this Node.
               Must be able to be represented as a bit-string with length < kademliaConstants.bit_string_size
               Generally this is an IP address.
+        random -- A random number generator to use
         """
         self.id = ID
+        self.rand = random
         self.successor = None
         self.predecessor = None
         
@@ -41,36 +43,38 @@ class Node(object):
         Python's annotation syntax.
         """
         def new_func(self, triple):
-            self.add_triple(triple)
+            self.update_routing_table(triple)
             func(triple)
 
         return new_func
     
     @update_kbuckets
-    def ping(self, triple):
+    def ping(self, _):
         """
-        This method is used to test whether or not another node is active
+        This method is used to test whether or not another node is
+        still active. It randomly decides whether or not to send back
+        a positive response using a factor defined in
+        kademliaConstants.failure_probability.
+        
         Return True if a response was received, False otherwise
-
-        triple -- The triple to contact
         """ 
-        return True
+        if self.random.random() <= failure_probability:
+            return False
 
-    def query(self, triple):
+        return True
+    
+
+    def update_routing_table(self, triple):
         """
         Query this node's routing table for a node, currently just adds the node to the table.
 
         triple -- A 3-tuple of the (IP, UDP Port, ID) to look up in the routing table
-        
         """
         ip, port, node_id = triple
         for k in self.kBuckets:
             if k.in_bucket(node_id):
-                try:
-                    k.add_triple(triple)
-                except WrongKBucketException:
-                    pass
-
+                k.add_triple(triple)
+                
     def compare_nodes(n1, n2):
         """
         Compare two nodes. Return a negative, positive, or zero if

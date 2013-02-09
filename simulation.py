@@ -39,7 +39,7 @@ class Simulation:
         self.nodes = list()
         
         for i in range(0, size):
-            self.nodes.append(Node(self.random_IP()))
+            self.nodes.append(Node(self.random_IP(), self.rand))
             
     def random_IP(self):
         """
