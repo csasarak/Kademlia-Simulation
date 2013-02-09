@@ -9,23 +9,23 @@ class Node(object):
     
     """
     
-    def __init__(self, ID, random):
+    def __init__(self, node_name, random):
         """
         Constructor for a Kademlia node.
 
-        ID -- The ID for this Node.
+        node_name -- The name (non-hashed) for this Node.
               Must be able to be represented as a bit-string with length < kademliaConstants.bit_string_size
               Generally this is an IP address.
         random -- A random number generator to use
         """
-        self.id = ID
+        self.node_name = node_name
         self.rand = random
         self.successor = None
         self.predecessor = None
         
         # Get the hash and truncate to the correct number of bits
-        self.id_hash = int(hashlib.sha1(self.id).hexdigest(), 16)
-        self.id_hash = self.id_hash % int(math.pow(2, kademliaConstants.bit_string_size))
+        self.id = int(hashlib.sha1(self.node_name).hexdigest(), 16)
+        self.id = self.id % int(math.pow(2, kademliaConstants.bit_string_size))
         
         self.kBuckets = list()
         self.key_value = (None, None)
@@ -37,14 +37,14 @@ class Node(object):
     def update_kbuckets(func):
         """
         This decorator function will return a new function that
-        updates a k-bucket with whatever triple it was called with.
+        updates a k-bucket with whatever node reference it was called with.
 
         func -- The function to decorate, normally this will be decorated with
         Python's annotation syntax.
         """
-        def new_func(self, triple):
-            self.update_routing_table(triple)
-            func(triple)
+        def new_func(self, double):
+            self.update_routing_table(double)
+            func(double)
 
         return new_func
     
@@ -64,16 +64,16 @@ class Node(object):
         return True
     
 
-    def update_routing_table(self, triple):
+    def update_routing_table(self, double):
         """
-        Query this node's routing table for a node, currently just adds the node to the table.
+        Query update the routing table with 
 
-        triple -- A 3-tuple of the (IP, UDP Port, ID) to look up in the routing table
+        double -- A 2-tuple of the (ID, node reference) to look up in the routing table
         """
-        ip, port, node_id = triple
+        ip, node_ref = double
         for k in self.kBuckets:
             if k.in_bucket(node_id):
-                k.add_triple(triple)
+                k.add_node(double)
                 
     def compare_nodes(n1, n2):
         """
@@ -83,7 +83,7 @@ class Node(object):
         n1 -- The first node for the comparison.
         n2 -- The second node for the comparison.
         """
-        diff = n1.id_hash - n2.id_hash
+        diff = n1.id - n2.id
 
         # Need to make this an integer, so check them
         if diff < 0:
@@ -98,7 +98,7 @@ class Node(object):
         """
         Return a string representation of this Node and the contents of its k-buckets.
         """
-        string = "Node {}, ID hash {}: ".format(self.id, hex(self.id_hash))
+        string = "Node {}, ID hash {}: ".format(self.node_name, hex(self.id))
         
         for i in self.kBuckets:
             string = "{} {}".format(string, str(i))
@@ -114,8 +114,8 @@ class KBucket(object):
     
     class WrongKBucketException(Exception):
         """
-        This exception is thrown when an attempt is made to add a triple to a KBucket when that
-        triple is out of that KBucket's range.
+        This exception is thrown when an attempt is made to add a double to a KBucket when that
+        double is out of that KBucket's range.
 
         """
         pass
@@ -126,7 +126,7 @@ class KBucket(object):
 
         i    -- The position of this KBucket in the Node's bucket-list
         node -- The node that this KBucket is referenced in.
-        k    -- Optional, the size of the list of triples this KBucket should maintain.
+        k    -- Optional, the size of the list of doubles this KBucket should maintain.
                 If not included, then kademliaConstants.k_bucket_size will be used.
                 
         """
@@ -138,41 +138,40 @@ class KBucket(object):
 
         self.i = i
         self.node = parent_node
-        self.triples = list()
+        self.doubles = list()
 
 
-    def add_triple(self, triple ):
+    def add_double(self, double):
         """
-        Add a triple to this KBucket.
+        Add a double comprised of a node ID and a reference to that node to this KBucket.
 
-        triple -- A 3-tuple of (IP, UDP Port, ID) to add to this KBucket
+        double -- A 2-tuple of (node_id, node ref) to add to this KBucket
 
-        WrongKBucketException -- Thrown if the given triple's ID is not in this KBucket's space
-        
+        WrongKBucketException -- Thrown if the given double's ID is not in this KBucket's space
         """
-        ip, port, node_id = triple
+        node_id, node_ref  = double
         if(not self.in_bucket(node_id)):
             raise WrongKBucketException()
         
         ind = None
 
         try:
-            index = self.triples.index(triple)
-            t = self.triples[index]
-            self.triples.delete(index)
-            self.triples.append(t)
+            index = self.doubles.index(double)
+            t = self.doubles[index]
+            self.doubles.delete(index)
+            self.doubles.append(t)
         except ValueError:
             # Not in the k-bucket
-            if(len(self.triples) < self.k):
-                self.triples.append(triple)
+            if(len(self.doubles) < self.k):
+                self.doubles.append(double)
                 return
 
-            least_recently_seen = self.triples[0]
+            least_recently_seen = self.doubles[0]
             if(not self.node.ping(least_recently_seen)):
-                self.triples.delete(0)
-                self.triples.append(triple)
+                self.doubles.delete(0)
+                self.doubles.append(double)
 
-            # k-bucket is full, throw away this triple
+            # k-bucket is full, throw away this double
                 
                 
     def in_bucket(self, other_id):
@@ -189,15 +188,15 @@ class KBucket(object):
 
     def __str__(self):
         """
-        Return a string representation of this KBucket including the values of its triples.
+        Return a string representation of this KBucket including the values of its doubles.
         
         """
         string = "\nkBucket {}: ".format(self.i)
 
-        if(len(self.triples) == 0):
+        if(len(self.doubles) == 0):
             return "{} empty;".format(string)
         
-        for b in self.triples:
+        for b in self.doubles:
             ip, port, node_id = b
             string = "\n\t{} ({}, {}, {});".format(string, ip, port, hex(node_id) );
 
