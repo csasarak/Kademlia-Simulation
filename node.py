@@ -35,7 +35,6 @@ class Node(object):
             self.kBuckets.append(KBucket(i, self, kademliaConstants.k_bucket_size))
 
     # THE RPCS FOR KADEMLIA ARE DEFINED HERE
-    @update_kbuckets
     def ping(self, double):
         """
         This method is used to test whether or not another node is
@@ -52,23 +51,66 @@ class Node(object):
         return True
 
 
-    def store(self, node_id, node_ref, key, value):
+    def store(self, querying_node, key, value):
         """
         This RPC stores a key/value pair in this Node for later retrieval.
 
-        node_id -- The node requesting the key value storage
-        node_ref -- The reference to the requesting node
+        querying_node -- A 2-tuple with a reference to the requesting node ID and the node reference
+        key -- The key to store in this node
+        value -- The value to associate with the key in this node
         """
-        self.update_routing_table((node_id, node_ref)) 
+        self.update_routing_table(querying_node) 
         self.data_table[key] = value
 
+    def find_node(self, node_id, querying_node):
+        """
+        This RPC will search this nodes k-buckets for the k (as defined in kademliaConstants.k_bucket_size) closest nodes to the given node_id and return the list.
+
+        node_id -- The node ID we are looking for nodes closest to
+        querying_node -- A 2-tuple of the node id and a reference to
+        the node of the node that called this RPC
+        """
+        self.update_routing_table(querying_node)
+
+        # Find our closest bucket to the node_id
+        closest = None
+        for b in range(len(self.kBuckets)):
+            if self.kBuckets[b].in_bucket(node_id):
+                closest = b
+
+        if len(self.kBuckets[b].doubles) > kademliaConstants.k_bucket_size:
+            return self.kBuckets[b].doubles[0:kademliaConstants.k_bucket_size]
+
+        # Other wise we must find at least k nodes closeby
+        closest_list = list()
+        closest_list.extend(self.kBuckets[b].doubles)
+        
+        n = b + 1
+        current_length = len(closest_list)
+        while(n != b):
+            if n == len(self.kBuckets):
+                n = 0
+            bucket_length = len(self.kBuckets[n].doubles)
+            if bucket_length >= kademliaConstants.k_bucket_size - current_length:
+                closest_list.extend(self.k_bucket_size[n].doubles[:kademliaConstants.k_bucket_size - current_length])
+                return closest_list
+
+            closest_list.extend(self.kBuckets[n].doubles)
+            current_length = current_length + len(self.kBuckets[b].doubles)
+            n = n + 1
+            
+                
     def update_routing_table(self, double):
         """
         Query update the routing table with 
 
         double -- A 2-tuple of the (ID, node reference) to look up in the routing table
         """
-        ip, node_ref = double
+        node_id, node_ref = double
+        # Our own information should never be added to the routing table
+        if node_id == self.node_id:
+            return
+        
         for k in self.kBuckets:
             if k.in_bucket(node_id):
                 k.add_node(double)
@@ -159,13 +201,13 @@ class KBucket(object):
             self.doubles.delete(index)
             self.doubles.append(t)
         except ValueError:
-            # Not in the k-bucket
+            # Not in the k-bucket already
             if(len(self.doubles) < self.k):
                 self.doubles.append(double)
                 return
 
             (lrs_id, least_recently_seen_ref) = self.doubles[0]
-            if(not least_recently_seen_ref.ping((self.node_id, self)):
+            if not least_recently_seen_ref.ping((self.node_id, self)):
                 self.doubles.delete(0)
                 self.doubles.append(double)
 
