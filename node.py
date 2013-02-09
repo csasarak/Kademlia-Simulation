@@ -28,28 +28,15 @@ class Node(object):
         self.id = self.id % int(math.pow(2, kademliaConstants.bit_string_size))
         
         self.kBuckets = list()
-        self.key_value = (None, None)
+        self.data_table = dict()
         
         # Populate the Node with empty buckets
         for i in range(0, kademliaConstants.bit_string_size):
             self.kBuckets.append(KBucket(i, self, kademliaConstants.k_bucket_size))
 
-    def update_kbuckets(func):
-        """
-        This decorator function will return a new function that
-        updates a k-bucket with whatever node reference it was called with.
-
-        func -- The function to decorate, normally this will be decorated with
-        Python's annotation syntax.
-        """
-        def new_func(self, double):
-            self.update_routing_table(double)
-            func(double)
-
-        return new_func
-    
+    # THE RPCS FOR KADEMLIA ARE DEFINED HERE
     @update_kbuckets
-    def ping(self, _):
+    def ping(self, double):
         """
         This method is used to test whether or not another node is
         still active. It randomly decides whether or not to send back
@@ -57,12 +44,23 @@ class Node(object):
         kademliaConstants.failure_probability.
         
         Return True if a response was received, False otherwise
-        """ 
+        """
+        self.update_routing_table(double)
         if self.random.random() <= failure_probability:
             return False
 
         return True
-    
+
+
+    def store(self, node_id, node_ref, key, value):
+        """
+        This RPC stores a key/value pair in this Node for later retrieval.
+
+        node_id -- The node requesting the key value storage
+        node_ref -- The reference to the requesting node
+        """
+        self.update_routing_table((node_id, node_ref)) 
+        self.data_table[key] = value
 
     def update_routing_table(self, double):
         """
@@ -145,7 +143,7 @@ class KBucket(object):
         """
         Add a double comprised of a node ID and a reference to that node to this KBucket.
 
-        double -- A 2-tuple of (node_id, node ref) to add to this KBucket
+        double -- A 2-tuple of (node_id, node reference) to add to this KBucket
 
         WrongKBucketException -- Thrown if the given double's ID is not in this KBucket's space
         """
@@ -166,8 +164,8 @@ class KBucket(object):
                 self.doubles.append(double)
                 return
 
-            least_recently_seen = self.doubles[0]
-            if(not self.node.ping(least_recently_seen)):
+            (lrs_id, least_recently_seen_ref) = self.doubles[0]
+            if(not least_recently_seen_ref.ping((self.node_id, self)):
                 self.doubles.delete(0)
                 self.doubles.append(double)
 
