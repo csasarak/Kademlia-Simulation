@@ -44,8 +44,7 @@ class Node(object):
         
         Return True if a response was received, False otherwise
         """
-        print "Updating {}".format(self.node.id)
-        self.update_routing_table(double)
+        # self.update_routing_table(double)
         if self.rand.random() <= kademliaConstants.failure_probability:
             return False
 
@@ -92,14 +91,95 @@ class Node(object):
                 n = 0
             bucket_length = len(self.kBuckets[n].doubles)
             if bucket_length >= kademliaConstants.k_bucket_size - current_length:
-                closest_list.extend(self.k_bucket_size[n].doubles[:kademliaConstants.k_bucket_size - current_length])
+                closest_list.extend(self.kBuckets[n].doubles[:kademliaConstants.k_bucket_size - current_length])
                 return closest_list
 
             closest_list.extend(self.kBuckets[n].doubles)
             current_length = current_length + len(self.kBuckets[b].doubles)
             n = n + 1
+
+        return closest_list
             
-                
+    def lookup_node(self, key):
+        """
+        This method will look up nodes that are close to the given key.
+        It will return the nodes that might contain it.
+
+        key -- The key we are searching for
+        """
+        def cmp_doubles(d1, d2):
+            """
+            Compare doubles based on their distance from the key.
+            """
+            (d1, _) = d1
+            (d2, _) = d2
+            dist1 = d1 ^ key
+            dist2 = d2 ^ key
+
+            if dist1 - dist2 < 0:
+                return -1
+            elif dist1 - dist2 > 0:
+                return 1
+
+            return 0
+        
+        # Search for the bucket for this key
+
+        bucket_index = None
+        for b in range(len(self.kBuckets)):
+            if self.kBuckets[b].in_bucket(key):
+                bucket_index = b
+
+        # Get the initial alpha list
+        alpha_list = list()
+        k_bucket = self.kBuckets[bucket_index]
+        if len(k_bucket.doubles) < kademliaConstants.lookup_alpha:
+            alpha_list.extend(k_bucket.doubles)
+
+            a_len = len(alpha_list)
+            n = bucket_index + 1
+            while(n != bucket_index and len(alpha_list) < kademliaConstants.lookup_alpha):
+                if n == len(self.kBuckets):
+
+                    n = 0
+                alpha_list.extend(self.kBuckets[n].doubles[:kademliaConstants.lookup_alpha - len(alpha_list)])
+                n = n + 1
+
+        else:
+            alpha_list.extend(k_bucket.doubles[:kademliaConstants.lookup_alpha])
+
+        # If all our k-buckets are completely empty, then stop
+        if len(alpha_list) == 0:
+            return
+        
+        # Find the node with the closest ID
+        alpha_list.sort(cmp_doubles)
+        (_, closest_node) = alpha_list[0]
+        old_closest_node = self.id
+        k_count = 0
+        
+        while(True):
+            klist = list()
+            for (_, a) in alpha_list:
+                found_list = a.find_node(key, (self.id, self))
+                if found_list == None:
+                    continue
+                klist.extend(found_list)
+            
+            klist.sort(cmp_doubles)
+            old_closest_node = closest_node
+            (_, c) = klist[0]
+            closest_node = c
+            
+            if closest_node.id == old_closest_node.id or len(klist) >= kademliaConstants.k_bucket_size or k_count == kademliaConstants.k_bucket_size:
+                break
+
+            alpha_list = klist[:kademliaConstants.lookup_alpha]
+
+            k_count = k_count + 1
+            
+        return closest_node
+        
     def update_routing_table(self, double):
         """
         Query update the routing table with 
@@ -126,6 +206,7 @@ class Node(object):
         """
         # Update the routing table with what we already have
         self.update_routing_table((contact_node.id, contact_node))
+        contact_node.lookup_node(self.id)
         
     def compare_nodes(n1, n2):
         """
@@ -210,7 +291,7 @@ class KBucket(object):
         try:
             index = self.doubles.index(double)
             t = self.doubles[index]
-            self.doubles.remove(index)
+            self.doubles.pop(index)
             self.doubles.append(t)
         except ValueError:
             # Not in the k-bucket already
@@ -220,7 +301,7 @@ class KBucket(object):
 
             (lrs_id, least_recently_seen_ref) = self.doubles[0]
             if not least_recently_seen_ref.ping((self.node.id, self.node)):
-                self.doubles.remove(0)
+                self.doubles.pop(0)
                 self.doubles.append(double)
 
             # k-bucket is full, throw away this double
@@ -246,10 +327,10 @@ class KBucket(object):
         string = "\nkBucket {}: ".format(self.i)
 
         if(len(self.doubles) == 0):
-            return "\t{} empty;".format(string)
-        
+            return "{}\n\tempty;".format(string)
+
         for b in self.doubles:
             node_id, node_ref = b
-            string = "\n\t{} ({}, {});\n".format(string, node_ref.node_name, hex(node_id) )
+            string = "{}\n\t({}, {});".format(string, node_ref.node_name, hex(node_id) )
 
         return string
