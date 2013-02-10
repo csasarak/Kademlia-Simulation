@@ -1,0 +1,39 @@
+\documentclass[notitlepage,12pt]{article}
+\author{Christopher Sasarak}
+\date{2/9/2013}
+\title{Reliability of the Kademlia DHT}
+\begin{document}
+\maketitle
+
+\section{Overview}
+\label{sec:over}
+
+This project is inspired by the Tor and Invisible Internet Project (I2P) anonymity protocols. These
+protocls seek to make internet usage anonymous by making encrypted
+networks for public use. Each of them does this a different way. Tor
+is a circuit switched network which makes use of onion
+routing\cite{tor}. I2P in contrast, is a message based system which
+makes use of garlic routing, a modified form of onion routing
+\cite{i2p}. In this project, the Kademlia algorithm, a modified form
+of which is used in the routing of I2P, is examined to see how
+reliable it is when nodes are leaving the system. I hypothesize that
+as the rate of nodes leaving the system increases, the amount of time
+that it takes for a given node to perform a look-up will increase as
+well.
+
+\section{Papers}
+\label{sec:papers}
+
+\subsection{Paper 1: Performance analysis of anonymous communication channels provided by Tor}
+\label{sec:Tor}
+
+In \emph{Performance analysis of anonymous communication channels
+  provided by Tor} the authors perform an experimental analysis of Tor
+in order to find out how it performs and what might be an obstacle for
+users trying to use the system \cite[p.1]{tor}
+
+\bibliographystyle{plain}
+\bibliography{citations}
+\end{document}
+
+
