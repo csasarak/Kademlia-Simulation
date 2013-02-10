@@ -39,7 +39,19 @@ class Simulation:
         self.nodes = list()
         
         for i in range(0, size):
-            self.nodes.append(Node(self.random_IP(), self.rand))
+            new_node = Node(self.random_IP(), self.rand)
+            
+            # Select a random existing node if this isn't the first node,
+            # then use it to perform a network join
+            if not i == 0:
+                contact_node = self.rand.choice(self.nodes)
+                # Update new_node with the random contact node
+                new_node.join_network(contact_node)
+                
+            self.nodes.append(new_node)
+
+
+
             
     def random_IP(self):
         """

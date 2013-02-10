@@ -44,7 +44,8 @@ class Node(object):
         
         Return True if a response was received, False otherwise
         """
-        # self.update_routing_table(double)
+        print "Updating {}".format(self.node.id)
+        self.update_routing_table(double)
         if self.rand.random() <= kademliaConstants.failure_probability:
             return False
 
@@ -125,8 +126,6 @@ class Node(object):
         """
         # Update the routing table with what we already have
         self.update_routing_table((contact_node.id, contact_node))
-
-        
         
     def compare_nodes(n1, n2):
         """
@@ -151,7 +150,7 @@ class Node(object):
         """
         Return a string representation of this Node and the contents of its k-buckets.
         """
-        string = "Node {}, ID hash {}: ".format(self.node_name, hex(self.id))
+        string = "\nNode {}, ID hash {}:\n ".format(self.node_name, hex(self.id))
         
         for i in self.kBuckets:
             string = "{} {}".format(string, str(i))
@@ -234,7 +233,7 @@ class KBucket(object):
         other_id -- The id to check against this KBucket's space
         """
         distance = self.node.id ^ other_id
-        if(distance  <= math.pow(2, self.i+1) and distance > math.pow(2, self.i)):
+        if distance >= math.pow(2, self.i) and distance < math.pow(2, self.i + 1):
             return True
         else:
             return False
@@ -247,10 +246,10 @@ class KBucket(object):
         string = "\nkBucket {}: ".format(self.i)
 
         if(len(self.doubles) == 0):
-            return "{} empty;".format(string)
+            return "\t{} empty;".format(string)
         
         for b in self.doubles:
-            ip, port, node_id = b
-            string = "\n\t{} ({}, {}, {});".format(string, ip, port, hex(node_id) );
+            node_id, node_ref = b
+            string = "\n\t{} ({}, {});\n".format(string, node_ref.node_name, hex(node_id) )
 
         return string
