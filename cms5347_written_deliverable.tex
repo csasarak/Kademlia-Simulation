@@ -30,7 +30,25 @@ well.
 In \emph{Performance analysis of anonymous communication channels
   provided by Tor} the authors perform an experimental analysis of Tor
 in order to find out how it performs and what might be an obstacle for
-users trying to use the system \cite[p.1]{tor}
+users trying to use the system \cite[p.1]{tor}. 
+
+Tor stands for \emph{The Onion Router} and is a system which provides
+anonymous internet access to users. It does this by randomly
+generating paths for packets and utilizing a technology called
+\emph{onion routing}. Onion routing is a method of communication where
+a message is encrypted for each hop on the network, and as it
+traverses each hop one layer of encryption is removed \cite[p. 1]{tor}
+
+Unfortunately, Tor is quite slow. One factor is that Tor is a network
+of comprised of volunteers who create nodes (\emph{Onion Routers})
+along which messages can travel\cite[p. 2]{tor}. At the time that
+\cite{tor} was written the number of permanent onion routers was about
+one thousand while there were several hundred thousand users. This
+disparity between routers and users leads to significant slow-downs
+which discourage users from using the network.  The authors want to
+investigate why ways in which Tor's performance can be improved
+because the distributed nature of Tor makes the network suffer when
+large numbers of users leave \cite[p. 1]{tor}.
 
 \bibliographystyle{plain}
 \bibliography{citations}
