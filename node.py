@@ -44,12 +44,11 @@ class Node(object):
         
         Return True if a response was received, False otherwise
         """
-        self.update_routing_table(double)
-        if self.random.random() <= failure_probability:
+        # self.update_routing_table(double)
+        if self.rand.random() <= kademliaConstants.failure_probability:
             return False
 
         return True
-
 
     def store(self, querying_node, key, value):
         """
@@ -108,13 +107,27 @@ class Node(object):
         """
         node_id, node_ref = double
         # Our own information should never be added to the routing table
-        if node_id == self.node_id:
+        if node_id == self.id:
             return
         
         for k in self.kBuckets:
             if k.in_bucket(node_id):
                 k.add_node(double)
-                
+
+    def join_network(self, contact_node):
+        """
+        This method should be called once after a node is created. It
+        takes a single contact node and then starts to populate the
+        current node's routing table using that contact node.
+
+        contact_node -- A reference to the initial node that this one
+        already knows about.
+        """
+        # Update the routing table with what we already have
+        self.update_routing_table((contact_node.id, contact_node))
+
+        
+        
     def compare_nodes(n1, n2):
         """
         Compare two nodes. Return a negative, positive, or zero if
@@ -181,7 +194,7 @@ class KBucket(object):
         self.doubles = list()
 
 
-    def add_double(self, double):
+    def add_node(self, double):
         """
         Add a double comprised of a node ID and a reference to that node to this KBucket.
 
@@ -198,7 +211,7 @@ class KBucket(object):
         try:
             index = self.doubles.index(double)
             t = self.doubles[index]
-            self.doubles.delete(index)
+            self.doubles.remove(index)
             self.doubles.append(t)
         except ValueError:
             # Not in the k-bucket already
@@ -207,8 +220,8 @@ class KBucket(object):
                 return
 
             (lrs_id, least_recently_seen_ref) = self.doubles[0]
-            if not least_recently_seen_ref.ping((self.node_id, self)):
-                self.doubles.delete(0)
+            if not least_recently_seen_ref.ping((self.node.id, self.node)):
+                self.doubles.remove(0)
                 self.doubles.append(double)
 
             # k-bucket is full, throw away this double
