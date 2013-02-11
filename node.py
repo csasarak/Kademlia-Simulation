@@ -22,6 +22,10 @@ class Node(object):
         self.rand = random
         self.successor = None
         self.predecessor = None
+        self.hopDuration = 0 # The collected duration for hops between
+                             # this node and other nodes. The node
+                             # calling the remote RPC is the one
+                             # responsible for storing the RTT
         
         # Get the hash and truncate to the correct number of bits
         self.id = int(hashlib.sha1(self.node_name).hexdigest(), 16)
@@ -44,7 +48,7 @@ class Node(object):
         
         Return True if a response was received, False otherwise
         """
-        # self.update_routing_table(double)
+        self.update_routing_table(double)
         if self.rand.random() <= kademliaConstants.failure_probability:
             return False
 
@@ -63,12 +67,15 @@ class Node(object):
 
     def find_node(self, node_id, querying_node):
         """
-        This RPC will search this nodes k-buckets for the k (as defined in kademliaConstants.k_bucket_size) closest nodes to the given node_id and return the list.
+        This RPC will search this nodes k-buckets for the k (as defined in kademliaConstants.k_bucket_size) closest nodes to the given node_id and return the list. There is a probability that this node will not be online, so return None if this is the case.
 
         node_id -- The node ID we are looking for nodes closest to
         querying_node -- A 2-tuple of the node id and a reference to
         the node of the node that called this RPC
         """
+        if self.rand.random() <= kademliaConstants.failure_probability:
+            return None
+        
         self.update_routing_table(querying_node)
 
         # Find our closest bucket to the node_id
@@ -103,7 +110,7 @@ class Node(object):
     def lookup_node(self, key):
         """
         This method will look up nodes that are close to the given key.
-        It will return the nodes that might contain it.
+        It will return the closest node that it can find.
 
         key -- The key we are searching for
         """
@@ -122,9 +129,12 @@ class Node(object):
                 return 1
 
             return 0
+
+        # If the key happens to be this node, return ourselves
+        if key == self.id:
+            return self
         
         # Search for the bucket for this key
-
         bucket_index = None
         for b in range(len(self.kBuckets)):
             if self.kBuckets[b].in_bucket(key):
@@ -157,14 +167,31 @@ class Node(object):
         (_, closest_node) = alpha_list[0]
         old_closest_node = self.id
         k_count = 0
-        
+
+        # Repeatedly find nodes in the system
         while(True):
             klist = list()
+            hopDurations = list()
+
             for (_, a) in alpha_list:
                 found_list = a.find_node(key, (self.id, self))
+                hopDurations.append(self.rand.random() * kademliaConstants.maximum_RTT_time)
+                
                 if found_list == None:
                     continue
+                
                 klist.extend(found_list)
+
+            # Lookups are asynchronous so add in the maximum hopDuration as the time
+            # or the timeout time if there was a timeout
+            try:
+                hopDurations.index(None)
+                self.hopDuration = self.hopDuration + kademliaConstants.timeout_time
+            except ValueError:
+                self.hopDuration = self.hopDuration + max(hopDurations)
+
+            if len(klist) == 0:
+                continue
             
             klist.sort(cmp_doubles)
             old_closest_node = closest_node
