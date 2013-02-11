@@ -18,7 +18,6 @@ lookups = 1000
 
 # The rate at which we will disable nodes 
 node_disable_n = int(sys.argv[4])
-print node_disable_n
 sim = Simulation(seed, network_size)
 
 

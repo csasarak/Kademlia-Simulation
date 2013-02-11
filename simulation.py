@@ -3,9 +3,10 @@
 # can be used to run different simulations
 
 import random
-
+import hashlib
+import math
 import kademliaConstants
-from node import Node
+from node import Node, make_hash
 
 
 class Simulation:
@@ -32,12 +33,15 @@ class Simulation:
         Perform a node lookup between two random nodes, return the
         time that it took to complete the lookup.
         """
-        nodes = self.rand.sample(self.nodes, 2)
+        node = self.rand.choice(self.nodes)
 
-        target_node = nodes[1] 
-        start_node = nodes[0]
+        # Generate a random key to look for, use random_IP as a random
+        # string generator
+        target_key = hashlib.sha1(self.random_IP()).hexdigest()
+        target_key = int(target_key, 16)
+        target_key = target_key % (int(math.pow(2, kademliaConstants.bit_string_size)))
         
-        start_node.lookup_node(target_node.id)
+        node.lookup_node(target_key)
         
         
         

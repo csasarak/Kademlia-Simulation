@@ -3,6 +3,16 @@ import kademliaConstants
 import math
 import hashlib
 
+
+def make_hash(id_str):
+    """
+    Make a hash which is truncated to the correct bit length
+    based on kademliaConstants.bit_string_size.
+    """
+    hash_id = int(hashlib.sha1(id_str).hexdigest(), 16)
+    hash_id = hash_id % int(math.pow(2, kademliaConstants.bit_string_size))
+    return hash_id
+    
 class Node(object):
     """
     Implementation of a Kademlia node object.
@@ -28,8 +38,7 @@ class Node(object):
                              # responsible for storing the RTT
         
         # Get the hash and truncate to the correct number of bits
-        self.id = int(hashlib.sha1(self.node_name).hexdigest(), 16)
-        self.id = self.id % int(math.pow(2, kademliaConstants.bit_string_size))
+        self.id = make_hash(node_name)
         
         self.kBuckets = list()
         self.disabled = False # Whether or not this node is accessible
