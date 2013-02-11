@@ -88,3 +88,14 @@ class Simulation:
             string = "{} {}\n".format(string, str(n))
 
         return string
+
+    def disable_nodes(self, n):
+        """
+        Disable n nodes at random in the system.
+
+        n -- The number of nodes to disable in this simulation.
+        """
+        nodes = self.rand.sample(self.nodes, n)
+
+        for n in nodes:
+            n.disabled = True

@@ -22,7 +22,7 @@ class Node(object):
         self.rand = random
         self.successor = None
         self.predecessor = None
-        self.hopDuration = 0 # The collected duration for hops between
+        self.totalHopDuration = 0 # The collected duration for hops between
                              # this node and other nodes. The node
                              # calling the remote RPC is the one
                              # responsible for storing the RTT
@@ -185,9 +185,9 @@ class Node(object):
             # or the timeout time if there was a timeout
             try:
                 hopDurations.index(None)
-                self.hopDuration = self.hopDuration + kademliaConstants.timeout_time
+                self.totalHopDuration = self.totalHopDuration + kademliaConstants.timeout_time
             except ValueError:
-                self.hopDuration = self.hopDuration + max(hopDurations)
+                self.totalHopDuration = self.totalHopDuration + max(hopDurations)
 
             if len(klist) == 0:
                 continue
@@ -241,7 +241,8 @@ class Node(object):
 
         for n in range(i, len(self.kBuckets)):
             self.kBuckets[n].refresh()
-            
+
+        self.hopDuration = 0
         
     def compare_nodes(n1, n2):
         """
