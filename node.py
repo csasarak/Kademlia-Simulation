@@ -22,7 +22,7 @@ class Node(object):
         self.rand = random
         self.successor = None
         self.predecessor = None
-        self.totalHopDuration = 0 # The collected duration for hops between
+        self.totalLookupDuration = 0 # The collected duration for hops between
                              # this node and other nodes. The node
                              # calling the remote RPC is the one
                              # responsible for storing the RTT
@@ -71,9 +71,6 @@ class Node(object):
         querying_node -- A 2-tuple of the node id and a reference to
         the node of the node that called this RPC
         """
-        if self.rand.random() <= kademliaConstants.failure_probability:
-            return None
-        
         self.update_routing_table(querying_node)
 
         # Find our closest bucket to the node_id
@@ -164,42 +161,44 @@ class Node(object):
         # Find the node with the closest ID
         alpha_list.sort(cmp_doubles)
         (_, closest_node) = alpha_list[0]
-        old_closest_node = self.id
         k_count = 0
 
         # Repeatedly find nodes in the system
         while(True):
             klist = list()
             hopDurations = list()
-
             for (_, a) in alpha_list:
                 found_list = a.find_node(key, (self.id, self))
-                hopDurations.append(self.rand.random() * kademliaConstants.maximum_RTT_time)
-                
+                if found_list == None:
+                    hopDurations.append(None)
+                else:
+                    hopDurations.append(self.rand.triangular(mode=kademliaConstants.duration_mode) * kademliaConstants.maximum_RTT_time)
+
                 if found_list == None:
                     continue
                 
                 klist.extend(found_list)
 
-            # Lookups are asynchronous so add in the maximum hopDuration as the time
-            # or the timeout time if there was a timeout
+            # Lookups are asynchronous so add in the maximum
+            # hopDuration as the time, or the timeout if contacting a node failed
             try:
                 hopDurations.index(None)
-                self.totalHopDuration = self.totalHopDuration + kademliaConstants.timeout_time
+                self.totalLookupDuration = self.totalLookupDuration + kademliaConstants.timeout_time
             except ValueError:
-                self.totalHopDuration = self.totalHopDuration + max(hopDurations)
-
+                self.totalLookupDuration = self.totalLookupDuration + max(hopDurations)
             if len(klist) == 0:
-                continue
+                break
             
             klist.sort(cmp_doubles)
-            old_closest_node = closest_node
-            (_, c) = klist[0]
-            closest_node = c
-            
-            if closest_node.id == old_closest_node.id or len(klist) >= kademliaConstants.k_bucket_size or k_count == kademliaConstants.k_bucket_size:
+            (closest_id, possible_closest_node) = klist[0]
+            if closest_node.id ^ key < closest_id ^ key:
                 break
-
+            else:
+                closest_node = possible_closest_node
+                
+            if len(klist) >= kademliaConstants.k_bucket_size or k_count == kademliaConstants.k_bucket_size:
+                break
+            
             alpha_list = klist[:kademliaConstants.lookup_alpha]
 
             k_count = k_count + 1
@@ -242,7 +241,6 @@ class Node(object):
         for n in range(i, len(self.kBuckets)):
             self.kBuckets[n].refresh()
 
-        self.hopDuration = 0
         
     def compare_nodes(n1, n2):
         """
