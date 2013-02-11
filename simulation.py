@@ -24,6 +24,7 @@ class Simulation:
         
         self.init_size = init_size if init_size else kademliaConstants.initial_network_size
 
+        self.nodes = None
         self.build_network()
 
     def perform_node_lookup(self):
