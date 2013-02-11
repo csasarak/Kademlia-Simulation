@@ -38,7 +38,16 @@ class Node(object):
         for i in range(0, kademliaConstants.bit_string_size):
             self.kBuckets.append(KBucket(i, self, kademliaConstants.k_bucket_size))
 
+    def accessible(func):
+        def new_func(self, *args, **kwargs):
+            if self.disabled:
+                return None
+            return func(self, *args, **kwargs)
+
+        return new_func
+                     
     # THE RPCS FOR KADEMLIA ARE DEFINED HERE
+    @accessible
     def ping(self, double):
         """
         This method is used to test whether or not another node is
@@ -51,9 +60,9 @@ class Node(object):
         self.update_routing_table(double)
         if self.rand.random() <= kademliaConstants.failure_probability:
             return False
-
         return True
 
+    @accessible
     def find_node(self, node_id, querying_node):
         """
         This RPC will search this nodes k-buckets for the k (as defined in kademliaConstants.k_bucket_size) closest nodes to the given node_id and return the list. There is a probability that this node will not be online, so return None if this is the case.
@@ -95,7 +104,8 @@ class Node(object):
             n = n + 1
 
         return closest_list
-            
+
+    @accessible
     def lookup_node(self, key):
         """
         This method will look up nodes that are close to the given key.
