@@ -26,6 +26,20 @@ class Simulation:
 
         self.build_network()
 
+    def perform_node_lookup(self):
+        """
+        Perform a node lookup between two random nodes, return the
+        time that it took to complete the lookup.
+        """
+        nodes = self.rand.sample(self.nodes, 2)
+
+        target_node = nodes[1] 
+        start_node = nodes[0]
+        
+        start_node.lookup_node(target_node.id)
+        
+        
+        
     def build_network(self, n = None):
         """
         Build an initial network with, IDs are determined by a random
@@ -49,10 +63,7 @@ class Simulation:
                 new_node.join_network(contact_node)
                 
             self.nodes.append(new_node)
-
-
-
-            
+    
     def random_IP(self):
         """
         Generate a random IP address.
