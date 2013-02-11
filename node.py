@@ -32,7 +32,7 @@ class Node(object):
         self.id = self.id % int(math.pow(2, kademliaConstants.bit_string_size))
         
         self.kBuckets = list()
-        self.data_table = dict()
+        self.disabled = False # Whether or not this node is accessible
         
         # Populate the Node with empty buckets
         for i in range(0, kademliaConstants.bit_string_size):
@@ -53,17 +53,6 @@ class Node(object):
             return False
 
         return True
-
-    def store(self, querying_node, key, value):
-        """
-        This RPC stores a key/value pair in this Node for later retrieval.
-
-        querying_node -- A 2-tuple with a reference to the requesting node ID and the node reference
-        key -- The key to store in this node
-        value -- The value to associate with the key in this node
-        """
-        self.update_routing_table(querying_node) 
-        self.data_table[key] = value
 
     def find_node(self, node_id, querying_node):
         """
