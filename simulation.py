@@ -88,10 +88,3 @@ class Simulation:
             string = "{} {}\n".format(string, str(n))
 
         return string
-
-    def ping_all(self):
-        """
-        Test method. Pings all the nodes known to this simulator and
-        prints the
-        """
-        pass
