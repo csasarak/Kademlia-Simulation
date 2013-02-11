@@ -4,11 +4,13 @@
 
 import sys
 import node
+import csv
 from simulation import Simulation
 
-usage = """Usage: ./RunSimulation.py <random seed> <network size> <trials> <disable frequency>
+usage = """Usage: ./RunSimulation.py <random seed> <network size> <trials> <disable frequency> [<data output file>]
 During each trial, the disable frequency is multiplied by the trial number to get the number of nodes to disable for that trial"""
 
+out_filename = "data.out"
 if len(sys.argv) < 5:
     print usage
     sys.exit(1)
@@ -22,14 +24,17 @@ try:
 except ValueError:
     print usage
     sys.exit(1)
+    
+if len(sys.argv) == 6:
+    out_filename = sys.argv[5]
 
 print "Building network"    
 sim = Simulation(seed, network_size)
 lookups = 1000
 # Train the network a bit by doing random lookups
-for i in range(3000):
-    if i % 10 == 0:
-        sys.stdout.write("\rInitializing network {0:.1f}%".format(i / 3000.0 * 100))
+for i in range(network_size / 2):
+    if i % 20 == 0:
+        sys.stdout.write("\rInitializing network {0:.1f}%".format(i / (network_size / 2.0) * 100))
         sys.stdout.flush()
     sim.perform_node_lookup()
     
@@ -39,19 +44,26 @@ sys.stdout.flush()
 for n in sim.nodes:
     n.totalLookupDuration = 0
 
-for trial in range(trials):
-    print "================================================================================"
-    sim.disable_nodes(trial * node_disable_n)
+with open(out_filename, 'wb') as csv_file:
+    csv_writer = csv.writer(csv_file, delimiter=' ')
+    csv_writer.writerow(["# Trial", "Disabled Nodes", "Avg. lookup time"])
     
-    print "\nTrial ", trial, " with ", trial * node_disable_n, " nodes disabled"
+    for trial in range(trials):
+        print "================================================================================"
+        disabled_nodes = trial * node_disable_n
+        sim.disable_nodes(disabled_nodes)
+    
+        print "\nTrial ", trial + 1, " with ", disabled_nodes, " nodes disabled"
 
-    # Perform lookups and then get the average time
-    for i in range(lookups):
-        sim.perform_node_lookup()
+        # Perform lookups and then get the average time
+        for i in range(lookups):
+            sim.perform_node_lookup()
 
-    time_sum = 0
-    for n in sim.nodes:
-        time_sum = time_sum + n.totalLookupDuration
-        n.totalLookupDuration = 0
+        time_sum = 0
+        for n in sim.nodes:
+            time_sum = time_sum + n.totalLookupDuration
+            n.totalLookupDuration = 0
 
-    print "Avg. lookup time: {0:.4f} seconds".format(time_sum / network_size/ 1000)
+        avg_lookup_time = time_sum / network_size/ 1000
+        print "Avg. lookup time: {0:.4f} seconds".format(avg_lookup_time)
+        csv_writer.writerow([trial, disabled_nodes, avg_lookup_time])
