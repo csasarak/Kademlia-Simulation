@@ -233,6 +233,15 @@ class Node(object):
         # Update the routing table with what we already have
         self.update_routing_table((contact_node.id, contact_node))
         contact_node.lookup_node(self.id)
+
+        # Now refresh all buckets further than our closest neighbor
+        for i in range(len(self.kBuckets)):
+            if len(self.kBuckets[i].doubles) != 0:
+                return i + 1
+
+        for n in range(i, len(self.kBuckets)):
+            self.kBuckets[n].refresh()
+            
         
     def compare_nodes(n1, n2):
         """
@@ -284,7 +293,7 @@ class KBucket(object):
         Constructor for the KBucket.
 
         i    -- The position of this KBucket in the Node's bucket-list
-        node -- The node that this KBucket is referenced in.
+        node -- The node that this KBucket is referenced in. 
         k    -- Optional, the size of the list of doubles this KBucket should maintain.
                 If not included, then kademliaConstants.k_bucket_size will be used.
                 
@@ -316,6 +325,7 @@ class KBucket(object):
 
         try:
             index = self.doubles.index(double)
+
             t = self.doubles[index]
             self.doubles.pop(index)
             self.doubles.append(t)
@@ -332,7 +342,15 @@ class KBucket(object):
 
             # k-bucket is full, throw away this double
                 
-                
+
+    def refresh(self):
+        """
+        This method will pick a random key in the range of this kbucket and perform
+        a lookup.
+        """
+        key = self.node.rand.randrange(math.pow(2, self.i), math.pow(2, self.i + 1) - 1)
+        self.node.lookup_node(key)
+        
     def in_bucket(self, other_id):
         """
         Determine if a particular ID goes into this kBucket.
