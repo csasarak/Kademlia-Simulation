@@ -8,7 +8,8 @@ import csv
 from simulation import Simulation
 
 usage = """Usage: ./RunSimulation.py <random seed> <network size> <trials> <disable frequency> [<data output file>]
-During each trial, the disable frequency is multiplied by the trial number to get the number of nodes to disable for that trial"""
+During each trial, the disable frequency is multiplied by the trial number to get the number of nodes to disable for that trial.
+Training will perform half the network size worth of random lookups before testing  default is n."""
 
 out_filename = "data.out"
 if len(sys.argv) < 5:
@@ -32,11 +33,11 @@ print "Building network"
 sim = Simulation(seed, network_size)
 lookups = 1000
 # Train the network a bit by doing random lookups
-# for i in range(int(network_size / 2)):
-#     if i % 20 == 0:
-#         sys.stdout.write("\rInitializing network {0:.1f}%".format(i / (network_size / 2.0) * 100))
-#         sys.stdout.flush()
-#     sim.perform_node_lookup()
+for i in range(int(network_size / 2)):
+    if i % 20 == 0:
+        sys.stdout.write("\rInitializing network {0:.1f}%".format(i / (network_size / 2.0) * 100))
+        sys.stdout.flush()
+    sim.perform_node_lookup()
     
 sys.stdout.write("\rInitializing network 100% \n\n")
 sys.stdout.flush()
