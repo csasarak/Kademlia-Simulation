@@ -181,6 +181,7 @@ class Node(object):
                 if found_list == None:
                     hopDurations.append(None)
                 else:
+                    # Calculate the hopDuration time for this find_node, erring on the side of duration_mode
                     hopDurations.append(self.rand.triangular(mode=kademliaConstants.duration_mode) * kademliaConstants.maximum_RTT_time)
 
                 if found_list == None:

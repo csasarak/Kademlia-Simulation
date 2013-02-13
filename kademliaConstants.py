@@ -2,7 +2,7 @@
 
 # This file contains constants for use by the Kademlia simulation
 
-bit_string_size = 32
+bit_string_size = 64
 k_bucket_size = 20
 initial_network_size = 1000
 failure_probability = .09
