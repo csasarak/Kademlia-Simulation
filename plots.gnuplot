@@ -1,30 +1,47 @@
 
 set title 'Change in key lookup time as more nodes are disabled'
-set xlabel 'Average time per lookup (s)'
-set ylabel 'Trial'
+set ylabel 'Average time per lookup (s)'
+set xlabel 'Trial'
 set key left
 
-f1(x) = m1*x + b1
-fit f1(x) '0_train.dat' via m1,b1
+graph_upper_bound = 50
+graph_lower_bound = 0
+graph_increment = 5
+set macros
 
-f2(x) = m2*x + b2
-fit f2(x) '5_train.dat' via m2,b2
+output_type="jpeg"
+combined_str = "plot "
+linear_str = "plot "
 
-f3(x) = m3*x + b3
-fit f3(x) '10_train.dat' via m3,b3
+# Build command strings
+do for [i = graph_lower_bound:graph_upper_bound:graph_increment] {
+   eval sprintf("f%d(x) = m%d*x + b%d", i, i, i)
+   eval sprintf("fit f%d(x) '%d_increase.dat' via m%d,b%d", i, i, i, i)
+   if (i == graph_upper_bound){
+      combined_str = sprintf("%s \'%d_increase.dat\' title \"remove %d nodes per trial\", f%d(x)", combined_str, i, i, i)
+      linear_str = sprintf("%s f%d(x)", linear_str, i)
+   } else{
+        combined_str = sprintf("%s \'%d_increase.dat\' title \"remove %d nodes per trial\", f%d(x),", combined_str, i, i, i)
+        linear_str = sprintf("%s f%d(x),", linear_str, i)
+   }
 
-f4(x) = m4*x + b4
-fit f4(x) '15_train.dat' via m4,b4
+}
 
-f5(x) = m5*x + b5
-fit f5(x) '20_train.dat' via m5,b5
+eval combined_str
 
-f6(x) = m6*x + b6
-fit f6(x) '25_train.dat' via m6,b6
+set term @output_type
+set output sprintf('combined.%s', output_type)
+replot
 
-plot '0_train.dat' title 'remove zero nodes per trial', f1(x) title 'Model fit', '5_train.dat' title 'remove five nodes per trial', f2(x) title 'Model fit',  '10_train.dat' title 'remove ten nodes per trial', f3(x) title 'Model fit', '15_train.dat' title 'remove fifteen nodes per trial', f4(x) title 'Model fit', '20_train.dat' title 'remove twenty nodes per trial', f5(x) title 'Model fit', '25_train.dat' title 'remove twenty-five nodes per trial', f6(x)title 'Model fit'
+set term x11
 
-#set term eps
+set xrange [0:100]
+set yrange [0:4.5]
 
+eval linear_str
 
+set term output_type
+set output sprintf('linear.%s', output_type)
+replot
 
+set term x11
