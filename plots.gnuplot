@@ -1,13 +1,9 @@
 
-set title 'Change in key lookup time as more nodes are disabled'
-set ylabel 'Average time per lookup (s)'
-set xlabel 'Trial'
-set key left
-
 graph_upper_bound = 50
 graph_lower_bound = 0
 graph_increment = 5
-output_type="jpeg"
+output_type="eps"
+image_size="1024,768"
 set macros
 
 
@@ -36,16 +32,24 @@ do for [i = graph_lower_bound:graph_upper_bound:graph_increment] {
 
 }
 
+set title 'Change in key lookup time as more nodes are disabled'
+set ylabel 'Average time per lookup (s)'
+set xlabel 'Trial'
+set key left
+
 eval combined_str
 
-set term @output_type
+set term @output_type size @image_size
 set output sprintf('combined.%s', output_type)
 replot
 
 set term x11
 
-set xrange [0:100]
-set yrange [0:4.5]
+
+set title 'Change in key lookup time as more nodes are disabled'
+set ylabel 'Average time per lookup (s)'
+set xlabel 'Trial'
+set key left
 
 eval linear_str
 
@@ -59,6 +63,6 @@ set xlabel "Nodes disabled per trial"
 set ylabel "Seconds per nodes disabled"
 set key box
 plot [0:55] [-.01:.05] 'slopes.dat'
-set term output_type
+set term @output_type size @image_size
 set output sprintf('slopes.%s', output_type)
 replot
