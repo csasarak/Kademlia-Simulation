@@ -170,7 +170,8 @@ Kademlia in an anonymity network.
 
 The main benefit of \cite{kademlia} is that it describes how the Kademlia algorithm
 is implemented on a network. Using the information in this paper, I created an
-adaptation of the Kademlia algorithm for use in a simulation. 
+adaptation of the Kademlia algorithm for use in a simulation. The simulation in
+turn can be used to test how well a Kademlia DHT handles node removals.
 
 \section{Software}
 \label{sec:software}
@@ -289,22 +290,21 @@ method.
 \subsubsection{RunSimulation.py}
 \label{sec:runsim}
 RunSimulation.py is a script that will build a network and then iteratively run
-a number of randomized look-ups (see
-\texttt{Simulation.perform\_node\_lookup}
-; printing the average RTT to stdout after it finishes each
-iteration (trial). One important thing to note is that before actual tests are
-run, the script will perform a number of random look-ups equal to half of the
-size of the network. This is because in a new network the nodes will learn about
-other nodes in the system more rapidly than in an established network. Training
-the nodes at the beginning prevents this from affecting the data produced when
-nodes are being removed.
+a number of randomized look-ups (see \texttt{Simulation.perform\_node\_lookup})
+printing the average RTT to stdout after it finishes each iteration (trial). One
+important thing to note is that before actual tests are run, the script will
+perform a number of random look-ups equal to half of the size of the
+network. This is because in a new network the nodes will learn about other nodes
+in the system more rapidly than in an established network. Training the nodes at
+the beginning prevents this from affecting the data produced when nodes are
+being removed.
 
 After each round of look-ups RunSimulation.py will disable some nodes at
 random and repeat. It also saves the number and average look-up time for each
 trial in a space-separated external file for use later.
 
-RunSimulation.py requires at least 2.7.x, also remember to give it execute
-privileges. Instead of execute privileges it can also be invoked with:
+RunSimulation.py requires at least 2.7.x. Also remember to give it execute
+privileges. Instead of needing execute privileges, it can also be invoked with:
 \begin{verbatim}
 python RunSimulation.py ...
 \end{verbatim}
@@ -363,21 +363,21 @@ from data output by run\_tests.sh. It requires gnuplot version 4.6 or higher. To
 use it, run it at the prompt as follows:
 \begin{verbatim}
 $ gnuplot
-gnuplot> load 'plots.gnuplots'
+gnuplot> load `plots.gnuplots'
 \end{verbatim}
 The parameters used to create the plots can be altered by editing the following
 variables in plots.gnuplot:
 \begin{description}
   \item[graph\_lower\_bound] The lowest number of nodes that would be removed
-    per trial in run\_tests.sh. Corresponds to "Node disable start bound" in run\_tests.sh.
+    per trial in run\_tests.sh. Corresponds to ``Node disable start bound" in run\_tests.sh.
   \item[graph\_upper\_bound] The highest number of nodes that would be removed
-    per trial in run\_tests.sh. Corresponds to "Node disable upper bound" in run\_tests.sh.
+    per trial in run\_tests.sh. Corresponds to ``Node disable upper bound" in run\_tests.sh.
   \item[graph\_increment] The number that was added for each experiment in
-    run\_tests.sh. Corresponds to "disable increment" in run\_tests.sh.
+    run\_tests.sh. Corresponds to ``disable increment" in run\_tests.sh.
   \item[output\_type] The file output type to write the graphs to. This can be
     any file format supported by you copy of gnuplot. Default is eps.
   \item[file\_suffix] The part of the filenames produced by run\_tests.sh after
-    the disable number. Default is '\texttt{\_increase.dat}'.
+    the disable number. Default is `\texttt{\_increase.dat}'.
   \item[image\_size] The size of the images produced by gnuplot, the default is 1024x768.
 \end{description}
 
@@ -412,7 +412,7 @@ with each node joining the network following the procedure described in
 \cite{kademlia}. The network was then trained by doing five-thousand random
 lookups so that nodes learning in early iterations would not affect trends as
 much as nodes were removed. This was not strictly necessary, as a comparison of
-the data in 0\_increase.dat and 0\_increase\_no\_train.dat shows.
+the data in \texttt{0\_increase.dat} and \texttt{0\_increase\_no\_train.dat} shows.
 In each test, there were one-hundred trials consisting of
 one-thousand random lookups. After each trial, some nodes were removed at random
 before doing the next. After each test, the network was regenerated using the
@@ -420,7 +420,7 @@ same random seed and the number of nodes to remove after each trial was
 increased by five. RunSimulation.py was run a total of ten times, meaning that
 at minimum zero nodes were removed from the network after each trial (as a
 control group) and at maximum fifty nodes were removed from the network after
-each trial. The data from these experiments are included in raw form in Appendix \ref{sec:data}
+each trial. The data from these experiments are included in raw form in Section \ref{sec:data}
 
 Figure \ref{fig:points} shows a plot of the average RTT for a lookup versus the
 trial number. Each color/shape represents a different number of nodes being
@@ -449,24 +449,28 @@ could be used for that purpose.
 
 \begin{figure}[htdp]
   \centering
+  \caption{}
   \includegraphics[width=\textwidth]{points}
   \label{fig:points}
 \end{figure}
 
 \begin{figure}[htdp]
   \centering
+  \caption{}
   \includegraphics[width=\textwidth]{combined}
   \label{fig:combined}
 \end{figure}
 
 \begin{figure}[htdp]
   \centering
+  \caption{}
   \includegraphics[width=\textwidth]{linear}
   \label{fig:linear}
 \end{figure}
 
 \begin{figure}[htdp]
   \centering
+  \caption{}
   \includegraphics[width=\textwidth]{slopes}
   \label{fig:slopes}
 \end{figure}
