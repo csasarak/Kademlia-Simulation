@@ -9,7 +9,7 @@ from simulation import Simulation
 
 usage = """Usage: ./RunSimulation.py <random seed> <network size> <trials> <disable frequency> [<data output file>]
 During each trial, the disable frequency is multiplied by the trial number to get the number of nodes to disable for that trial.
-Training will perform half the network size worth of random lookups before testing  default is n."""
+Training will perform half the network size worth of random lookups before testing."""
 
 out_filename = "data.out"
 if len(sys.argv) < 5:
